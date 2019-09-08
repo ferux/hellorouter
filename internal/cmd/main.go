@@ -14,8 +14,9 @@ import (
 )
 
 var (
-	revision string
-	branch   string
+	revision  string // nolint:gochecknoglobals
+	branch    string // nolint:gochecknoglobals
+	buildTime string // nolint:gochecknoglobals
 )
 
 func main() {
@@ -27,7 +28,7 @@ func main() {
 	addr := os.Args[1]
 	delay, err := time.ParseDuration(os.Args[2])
 	if err != nil {
-		printerr(err)
+		fatal(err)
 	}
 
 	addr = strings.TrimSuffix(addr, "/")
@@ -45,14 +46,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	bt, err := time.Parse(time.UnixDate, buildTime)
+	if err != nil {
+		fatal(err)
+	}
+
 	msg := notifier.Client{
-		ID:       getID(),
-		Name:     name,
-		Type:     kind,
-		Revision: revision,
-		Branch:   branch,
-		Addr:     addr,
-		Delay:    delay,
+		ID:        getID(),
+		Name:      name,
+		Type:      kind,
+		Revision:  revision,
+		Branch:    branch,
+		BuildTime: bt,
+		Addr:      addr,
+		Delay:     delay,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -72,7 +79,7 @@ func main() {
 func getID() string {
 	f, err := os.OpenFile(".info", os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
-		printerr(err)
+		fatal(err)
 	}
 
 	defer func() { _ = f.Close() }()
@@ -80,7 +87,7 @@ func getID() string {
 	var data = make([]byte, 32)
 	n, err := f.Read(data)
 	if err != nil && err != io.EOF {
-		printerr(err)
+		fatal(err)
 	}
 
 	if n == 32 {
@@ -89,18 +96,18 @@ func getID() string {
 
 	_, err = rand.Read(data)
 	if err != nil {
-		printerr(err)
+		fatal(err)
 	}
 
 	_, err = f.Write(data)
 	if err != nil {
-		printerr(err)
+		fatal(err)
 	}
 
 	return hex.EncodeToString(data)
 }
 
-func printerr(err error) {
+func fatal(err error) {
 	if err != nil {
 		println(err.Error())
 		os.Exit(1)

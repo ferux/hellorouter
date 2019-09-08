@@ -12,11 +12,12 @@ import (
 )
 
 type Client struct {
-	ID       string `json:"id"`
-	Name     string `json:"name,omitempty"`
-	Type     string `json:"type,omitempty"`
-	Revision string `json:"revision,omitempty"`
-	Branch   string `json:"branch,omitempty"`
+	ID        string    `json:"id"`
+	Name      string    `json:"name,omitempty"`
+	Type      string    `json:"type,omitempty"`
+	Revision  string    `json:"revision,omitempty"`
+	Branch    string    `json:"branch,omitempty"`
+	BuildTime time.Time `json:"build_time,omitempty"`
 
 	Addr  string        `json:"-"`
 	Delay time.Duration `json:"-"`
@@ -24,7 +25,7 @@ type Client struct {
 
 const defaultDelay = time.Second * 60
 
-// Start registers this application to remote service and sends pings peridoically.
+// Start registers this application to remote service and sends pings periodically.
 func Start(ctx context.Context, msg Client) {
 	if msg.Delay == 0 {
 		msg.Delay = defaultDelay
@@ -71,6 +72,8 @@ func ping(ctx context.Context, msg Client) {
 			}
 
 			_, _ = io.Copy(ioutil.Discard, resp.Body)
+
+			_ = resp.Body.Close()
 		}
 	}
 }

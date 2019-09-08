@@ -1,0 +1,10 @@
+{
+        "run": {
+                "deadline": "1m",
+                "modules_download_mode": "vendor"
+        },
+        "linters": {
+                "enable-all": true
+        },
+        "fast": false
+}
