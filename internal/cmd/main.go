@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ferux/hellorouter/internal/notifier"
+	"github.com/ferux/hellorouter/internal/server"
 )
 
 var (
@@ -58,22 +59,38 @@ func main() {
 		Revision:  revision,
 		Branch:    branch,
 		BuildTime: bt,
-		Addr:      addr,
-		Delay:     delay,
+		Addr:      "localhost:9999",
+		// Addr:      addr,
+		Delay: delay,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go func() {
-		s := make(chan os.Signal, 1)
-		signal.Notify(s, os.Interrupt)
+	// go func() {
+	// 	s := make(chan os.Signal, 1)
+	// 	signal.Notify(s, os.Interrupt)
 
-		<-s
-		cancel()
+	// 	<-s
+	// 	cancel()
+	// }()
+
+	go server.NewTCP(ctx, ":9999")
+
+	// notifier.Start(ctx, msg)
+	sd, err := notifier.NewTCPClient(msg)
+	fatal(err)
+
+	go func() {
+		<-ctx.Done()
+		_ = sd(nil)
 	}()
 
-	notifier.Start(ctx, msg)
+	s := make(chan os.Signal, 1)
+	signal.Notify(s, os.Interrupt)
+
+	<-s
+	cancel()
 }
 
 func getID() string {
